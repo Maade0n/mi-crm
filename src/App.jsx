@@ -1,37 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [clientes, setClientes] = useState([
-    {
-      id: 1,
-      nombre: "Juan Pérez",
-      empresa: "Tech Solutions",
-      email: "juan@empresa.com",
-      status: "Activo"
-    },
-    {
-      id: 2,
-      nombre: "María García",
-      empresa: "Startup Inc",
-      email: "maria@startup.com",
-      status: "Activo"
-    },
-    {
-      id: 3,
-      nombre: "Pedro López",
-      empresa: "Design Studio",
-      email: "pedro@design.com",
-      status: "Prospecto"
-    },
-    {
-      id: 4,
-      nombre: "Ana Martínez",
-      empresa: "Marketing Pro",
-      email: "ana@marketing.com",
-      status: "Inactivo"
-    }
-  ]);
+  const [clientes, setClientes] = useState(() => {
+    const saved = localStorage.getItem('clientes');
+    return saved ? JSON.parse(saved) : [
+      {id: 1, nombre: "Juan Pérez", empresa: "Tech Solutions", email: "juan@empresa.com", status: "Activo"},
+      {id: 2, nombre: "María García", empresa: "Startup Inc", email: "maria@startup.com", status: "Activo"},
+      {id: 3, nombre: "Pedro López", empresa: "Design Studio", email: "pedro@design.com", status: "Prospecto"},
+      {id: 4, nombre: "Ana Martínez", empresa: "Marketing Pro", email: "ana@marketing.com", status: "Inactivo"}
+    ];
+  });
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
@@ -42,6 +21,19 @@ function App() {
     status: 'Prospecto'
   });
 
+  const [filtro, setFiltro] = useState('Todos');
+
+  // Guardar en localStorage
+  useEffect(() => {
+    localStorage.setItem('clientes', JSON.stringify(clientes));
+  }, [clientes]);
+
+  // Filtrar clientes
+  const clientesFiltrados = filtro === 'Todos' 
+    ? clientes 
+    : clientes.filter(c => c.status === filtro);
+
+  // Agregar cliente
   const agregarCliente = (e) => {
     e.preventDefault();
     
@@ -62,6 +54,12 @@ function App() {
     setMostrarFormulario(false);
   };
 
+  // Eliminar cliente
+  const eliminarCliente = (id) => {
+    setClientes(clientes.filter(c => c.id !== id));
+  };
+
+  // Calcular estadísticas
   const totalClientes = clientes.length;
   const clientesActivos = clientes.filter(c => c.status === "Activo").length;
   const clientesProspectos = clientes.filter(c => c.status === "Prospecto").length;
@@ -151,9 +149,28 @@ function App() {
         </div>
       </div>
 
+      <div className="filtros-container">
+        {['Todos', 'Activo', 'Prospecto', 'Inactivo'].map(f => (
+          <button 
+            key={f}
+            onClick={() => setFiltro(f)}
+            className={`btn-filtro ${filtro === f ? 'activo' : ''}`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '2rem' }}>
-        {clientes.map((cliente) => (
+        {clientesFiltrados.map((cliente) => (
           <div key={cliente.id} className="cliente-card">
+            <button 
+              onClick={() => eliminarCliente(cliente.id)}
+              className="btn-eliminar"
+              title="Eliminar cliente"
+            >
+              ✕
+            </button>
             <h3 className="cliente-nombre">{cliente.nombre}</h3>
             <p className="cliente-empresa">{cliente.empresa}</p>
             <p className="cliente-email">{cliente.email}</p>
